@@ -3,7 +3,7 @@ use Cwd;
 %Repos = (  'my_lib' => { 'dep' => []},
             'my_gsl' => { 'dep' => ['my_lib']},
             'TChart' => { 'dep' => ['my_lib']},
-            'Refractometer-Sources' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'] }  );
+            'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'] }  );
             
 @DLLs = ('cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
          'cblas_x64_Debug.dll','cblas_x64_Release.dll',
@@ -55,7 +55,7 @@ sub CloneDep
 
 sub LinkDLLs
 {
-    my ($repo_name) = 'Refractometer-Sources';
+    my ($repo_name) = shift(@_);
     my ($cur_dir) = getcwd();
     $cur_dir =~ s/\//\\/g;
     print("=== Creating symbolic links for my_gsl DLLs\n");
@@ -63,7 +63,7 @@ sub LinkDLLs
     
     foreach(@DLLs)
     {
-        `mklink $cur_dir\\Refractometer-Sources\\exe\\$_ $cur_dir\\my_gsl\\dll\\$_` unless (-f "Refractometer-Sources\\exe\\$_");
+        `mklink $cur_dir\\$repo_name\\exe\\$_ $cur_dir\\my_gsl\\dll\\$_` unless (-f "$repo_name\\exe\\$_");
     }
 }
 
@@ -96,9 +96,9 @@ if (exists($Repos{$target}))
     MakeClone($target, checkout);
     CloneDep($target);
     CheckoutDep($target);
-    if ($target eq 'Refractometer-Sources')
+    if ($target eq $target)
     {        
-        LinkDLLs();        
+        LinkDLLs($target);        
     }
 }
 else
