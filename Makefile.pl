@@ -5,10 +5,11 @@ use Cwd;
             'TChart' => { 'dep' => ['my_lib']},
             'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'] }  );
             
-@DLLs = ('cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
-         'cblas_x64_Debug.dll','cblas_x64_Release.dll',
-         'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
-         'gsl_x64_Debug.dll', 'gsl_x64_Release.dll');
+%DLLs = ('my_gsl\\dll\\'        =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
+                                     'cblas_x64_Debug.dll','cblas_x64_Release.dll',
+                                     'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
+                                     'gsl_x64_Debug.dll', 'gsl_x64_Release.dll'],
+        'my_lib\\zlib\\dll\\'   =>  ['zlib1.dll'] );
 
 sub my_chdir
 {
@@ -61,9 +62,14 @@ sub LinkDLLs
     print("=== Creating symbolic links for my_gsl DLLs\n");
     `mkdir $repo_name\\exe` unless(-d "$repo_name\\exe");
     
-    foreach(@DLLs)
+    foreach $path (keys(%DLLs))
     {
-        `mklink $cur_dir\\$repo_name\\exe\\$_ $cur_dir\\my_gsl\\dll\\$_` unless (-f "$repo_name\\exe\\$_");
+        print("path = $path\n");
+        foreach $dll (@{$DLLs{$path}})
+        {
+            print("dll = $dll\n");
+            `mklink $cur_dir\\$repo_name\\exe\\$dll $cur_dir\\$path$dll` unless (-f "$repo_name\\exe\\$dll");
+        }
     }
 }
 
