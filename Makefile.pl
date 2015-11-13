@@ -68,7 +68,8 @@ sub LinkDLLs
         foreach $dll (@{$DLLs{$path}})
         {
             print("dll = $dll\n");
-            `mklink $cur_dir\\$repo_name\\exe\\$dll $cur_dir\\$path$dll` unless (-f "$repo_name\\exe\\$dll");
+            `del $repo_name\\exe\\$dll` if (-f "$repo_name\\exe\\$dll");
+            `mklink $cur_dir\\$repo_name\\exe\\$dll $cur_dir\\$path$dll`;
         }
     }
 }
@@ -102,7 +103,7 @@ if (exists($Repos{$target}))
     MakeClone($target, checkout);
     CloneDep($target);
     CheckoutDep($target);
-    if ($target eq $target)
+    if ($target eq 'Refractometer')
     {        
         LinkDLLs($target);        
     }
