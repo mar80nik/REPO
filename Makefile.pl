@@ -31,6 +31,9 @@ sub MakeClone
     else
     {
         `git clone https:\/\/github.com\/mar80nik\/$repo_name.git`;
+        my $cur_dir = my_chdir($repo_name);
+        `git remote set-url origin git\@github.com:mar80nik\/$repo_name.git`;
+        chdir($cur_dir);
     }
 
     if ($checkout eq 'checkout')
