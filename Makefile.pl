@@ -1,15 +1,21 @@
 use Cwd;
 
+$my_gsl_dlls_path = 'my_gsl\\dll\\';
+$zlib_dll_path = 'my_lib\\zlib\\dll\\';
+
 %Repos = (  'my_lib' => { 'dep' => []},
             'my_gsl' => { 'dep' => ['my_lib']},
             'TChart' => { 'dep' => ['my_lib']},
-            'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'] }  );
+            'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'], 
+                                 'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'Refractometer\\exe'}, 
+                                            {'src' => $zlib_dll_path, 'dst' => 'Refractometer\\exe'}] }  );
             
-%DLLs = ('my_gsl\\dll\\'        =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
+%DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
                                      'cblas_x64_Debug.dll','cblas_x64_Release.dll',
                                      'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
                                      'gsl_x64_Debug.dll', 'gsl_x64_Release.dll'],
-        'my_lib\\zlib\\dll\\'   =>  ['zlib1.dll'] );
+        $zlib_dll_path   =>  ['zlib1.dll'] );
+        
 
 sub my_chdir
 {
@@ -62,17 +68,25 @@ sub LinkDLLs
     my ($repo_name) = shift(@_);
     my ($cur_dir) = getcwd();
     $cur_dir =~ s/\//\\/g;
-    print("=== Creating symbolic links for my_gsl DLLs\n");
-    `mkdir $repo_name\\exe` unless(-d "$repo_name\\exe");
+    print("=== Creating symbolic links for $repo_name DLLs\n");
     
-    foreach $path (keys(%DLLs))
+    my @RepoDlls = @{$Repos{$repo_name}->{'dlls'}};
+    
+    foreach $dll_paths (@RepoDlls)
     {
-        print("path = $path\n");
-        foreach $dll (@{$DLLs{$path}})
+        my $dst = $dll_paths->{'dst'};
+        my $src = $dll_paths->{'src'};
+        print("$src => $dst\n");
+        foreach $dll_name (@{$DLLs{$src}})
         {
-            print("dll = $dll\n");
-            `del $repo_name\\exe\\$dll` if (-f "$repo_name\\exe\\$dll");
-            `mklink $cur_dir\\$repo_name\\exe\\$dll $cur_dir\\$path$dll`;
+            my $dst_dll = "$cur_dir\\$dst\\$dll_name";
+            my $src_dll = "$cur_dir\\$src\\$dll_name";
+            
+            print("$dll_name\n");
+
+            `mkdir $dst` unless(-d "$dst");
+            `del $dst_dll` if (-f "$dst_dll");
+            `mklink $dst_dll $src_dll`;
         }
     }
 }
@@ -106,10 +120,7 @@ if (exists($Repos{$target}))
     MakeClone($target, checkout);
     CloneDep($target);
     CheckoutDep($target);
-    if ($target eq 'Refractometer')
-    {        
-        LinkDLLs($target);        
-    }
+    LinkDLLs($target);        
 }
 else
 {
