@@ -7,8 +7,9 @@ $zlib_dll_path = 'my_lib\\zlib\\dll\\';
             'my_gsl' => { 'dep' => ['my_lib']},
             'TChart' => { 'dep' => ['my_lib']},
             'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'], 
-                                 'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'Refractometer\\exe'}, 
-                                            {'src' => $zlib_dll_path, 'dst' => 'Refractometer\\exe'}] }  );
+                                 'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'exe'}, 
+                                            {'src' => $zlib_dll_path, 'dst' => 'exe'}] } );
+$Repos{'Tracker'} = $Repos{'Refractometer'};
             
 %DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
                                      'cblas_x64_Debug.dll','cblas_x64_Release.dll',
@@ -68,13 +69,14 @@ sub LinkDLLs
     my ($repo_name) = shift(@_);
     my ($cur_dir) = getcwd();
     $cur_dir =~ s/\//\\/g;
-    print("=== Creating symbolic links for $repo_name DLLs\n");
     
     my @RepoDlls = @{$Repos{$repo_name}->{'dlls'}};
     
+    print("=== Creating symbolic links for $repo_name DLLs\n") if ($#RepoDlls >= 0);
+    
     foreach $dll_paths (@RepoDlls)
     {
-        my $dst = $dll_paths->{'dst'};
+        my $dst = "$repo_name\\$dll_paths->{'dst'}";
         my $src = $dll_paths->{'src'};
         print("$src => $dst\n");
         foreach $dll_name (@{$DLLs{$src}})
