@@ -2,6 +2,7 @@ use Cwd;
 
 $my_gsl_dlls_path = 'my_gsl\\dll\\';
 $zlib_dll_path = 'my_lib\\zlib\\dll\\';
+$MyGraphLib = 'my_lib\\MyGraphLib\\dll\\';
 
 %Repos = (  'my_lib' => { 'dep' => []},
             'my_gsl' => { 'dep' => ['my_lib']},
@@ -9,14 +10,18 @@ $zlib_dll_path = 'my_lib\\zlib\\dll\\';
             'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'], 
                                  'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'exe'}, 
                                             {'src' => $zlib_dll_path, 'dst' => 'exe'}] },
-            'testWMF' => { 'dep' => []} );
+            'testWMF' => { 'dep' => ['my_lib'],
+                           'dlls' => [{'src' => $MyGraphLib ,       'dst' => 'exe'},
+                                      {'src' => $zlib_dll_path, 'dst' => 'exe'}] } );
+                           
 $Repos{'Tracker'} = $Repos{'Refractometer'};
             
 %DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
                                      'cblas_x64_Debug.dll','cblas_x64_Release.dll',
                                      'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
                                      'gsl_x64_Debug.dll', 'gsl_x64_Release.dll'],
-        $zlib_dll_path   =>  ['zlib1.dll'] );
+        $zlib_dll_path   =>  ['zlib1.dll','zlib1d.dll'],
+        $MyGraphLib   =>  ['ijl15.dll','jpeg62.dll','libpng15d.dll','msvcr71d.dll']        );
         
 
 sub my_chdir
