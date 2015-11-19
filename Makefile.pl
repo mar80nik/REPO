@@ -8,7 +8,8 @@ $zlib_dll_path = 'my_lib\\zlib\\dll\\';
             'TChart' => { 'dep' => ['my_lib']},
             'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'], 
                                  'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'exe'}, 
-                                            {'src' => $zlib_dll_path, 'dst' => 'exe'}] } );
+                                            {'src' => $zlib_dll_path, 'dst' => 'exe'}] },
+            'testWMF' => { 'dep' => []} );
 $Repos{'Tracker'} = $Repos{'Refractometer'};
             
 %DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
