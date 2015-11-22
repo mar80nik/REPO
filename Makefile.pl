@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 use Cwd;
 
 $my_gsl_dlls_path = 'my_gsl\\dll\\';
