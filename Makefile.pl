@@ -16,9 +16,11 @@ $MyGraphLib = 'my_lib\\MyGraphLib';
             'testWMF' => { 'dep' => ['my_lib'],
                            'dlls' => [{'src' => $MyGraphLibDll, 'dst' => 'exe'},
                                       {'src' => $MyGraphLib,    'dst' => 'exe'},
-                                      {'src' => $zlib_dll_path, 'dst' => 'exe'}] } );
+                                      {'src' => $zlib_dll_path, 'dst' => 'exe'}] },
+            'DJVU_SEP');
                            
 $Repos{'Tracker'} = $Repos{'Refractometer'};
+$Repos{'DJVU_SEP'} = $Repos{'testWMF'};
             
 %DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
                                      'cblas_x64_Debug.dll','cblas_x64_Release.dll',
@@ -138,4 +140,9 @@ if (exists($Repos{$target}))
 else
 {
     print("===   Error: Target $target is not recgonized\n");
+    print("===   It should be one of:\n");
+    foreach(keys(%Repos))
+    {
+        print("$_\n");
+    }    
 }
