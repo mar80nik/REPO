@@ -1,36 +1,29 @@
 #!/usr/bin/perl
 
 use Cwd;
-
-$my_gsl_dlls_path = 'my_gsl\\dll\\';
-$zlib_dll_path = 'my_lib\\zlib\\dll\\';
-$MyGraphLibDll = 'my_lib\\MyGraphLib\\dll';
-$MyGraphLib = 'my_lib\\MyGraphLib';
+use File::Find;
 
 %Repos = (  'my_lib' => { 'dep' => []},
             'my_gsl' => { 'dep' => ['my_lib']},
             'TChart' => { 'dep' => ['my_lib']},
             'Refractometer' => { 'dep' => ['my_lib', 'my_gsl', 'TChart'], 
-                                 'dlls' => [{'src' => $my_gsl_dlls_path ,       'dst' => 'exe'}, 
-                                            {'src' => $zlib_dll_path, 'dst' => 'exe'}] },
+                                 'dlls' => ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
+                                     'cblas_x64_Debug.dll','cblas_x64_Release.dll',
+                                     'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
+                                     'gsl_x64_Debug.dll', 'gsl_x64_Release.dll', 
+                                     'zlib1.dll','zlib1d.dll'] },
             'testWMF' => { 'dep' => ['my_lib'],
-                           'dlls' => [{'src' => $MyGraphLibDll, 'dst' => 'exe'},
-                                      {'src' => $MyGraphLib,    'dst' => 'exe'},
-                                      {'src' => $zlib_dll_path, 'dst' => 'exe'}] },
-            'DJVU_SEP');
+                           'dlls' => ['ijl15.dll','jpeg62.dll','libpng15d.dll','msvcr71d.dll','libdjvulibre.dll','libjpeg.dll',
+                                      'i_view32.exe','pnmtodjvurle.exe','csepdjvu.exe',
+                                      'zlib1.dll','zlib1d.dll'] },
+            'DJVU_SEP' => {},
+            'djvu' => { 'dep' => ['my_lib'],
+                        'dlls' => ['djvudecode.exe','DjVuBundle.exe'] }
+                        );
                            
 $Repos{'Tracker'} = $Repos{'Refractometer'};
 $Repos{'DJVU_SEP'} = $Repos{'testWMF'};
             
-%DLLs = ($my_gsl_dlls_path      =>  ['cblas_Win32_Debug.dll','cblas_Win32_Release.dll',
-                                     'cblas_x64_Debug.dll','cblas_x64_Release.dll',
-                                     'gsl_Win32_Debug.dll', 'gsl_Win32_Release.dll',
-                                     'gsl_x64_Debug.dll', 'gsl_x64_Release.dll'],
-        $zlib_dll_path   =>  ['zlib1.dll','zlib1d.dll'],
-        $MyGraphLibDll   =>  ['ijl15.dll','jpeg62.dll','libpng15d.dll','msvcr71d.dll','libdjvulibre.dll','libjpeg.dll'],
-        $MyGraphLib      =>  ['i_view32.exe','pnmtodjvurle.exe','csepdjvu.exe']);
-        
-
 sub my_chdir
 {
     my ($dir) = shift(@_);
@@ -84,26 +77,51 @@ sub LinkDLLs
     $cur_dir =~ s/\//\\/g;
     
     my @RepoDlls = @{$Repos{$repo_name}->{'dlls'}};
+    @deps = @{$Repos{$repo_name}->{'dep'}};
     
     print("=== Creating symbolic links for $repo_name DLLs\n") if ($#RepoDlls >= 0);
     
-    foreach $dll_paths (@RepoDlls)
+    foreach $dll_name (@RepoDlls)
     {
-        my $dst = "$repo_name\\$dll_paths->{'dst'}";
-        my $src = $dll_paths->{'src'};
-        print("$src => $dst\n");
-        foreach $dll_name (@{$DLLs{$src}})
+        my $dll_name_dst = "$repo_name\\exe";
+        $dll_name_src = '';
+        
+        find(\&FindCallback, ".");
+        
+        if ($dll_name_src eq '')
         {
-            my $dst_dll = "$cur_dir\\$dst\\$dll_name";
-            my $src_dll = "$cur_dir\\$src\\$dll_name";
-            
-            print("$dll_name\n");
-
-            `mkdir $dst` unless(-d "$dst");
-            `del $dst_dll` if (-f "$dst_dll");
-            `mklink $dst_dll $src_dll`;
+            print("$dll_name not found\n");
+            continue;
         }
+
+        my $dst_dll = "$cur_dir\\$dll_name_dst\\$dll_name";
+        my $src_dll = "$cur_dir\\$dll_name_src\\$dll_name";
+        
+        print("$src_dll => $dst_dll\n");
+ 
+        `mkdir $dll_name_dst` unless(-d "$dll_name_dst");
+        `del $dst_dll` if (-f "$dst_dll");
+        `mklink $dst_dll $src_dll`;
     }
+}
+
+sub FindCallback()
+{
+    if (($_ eq $dll_name) && CheckFindPath())
+    {
+        $dll_name_src = $File::Find::dir;
+        $dll_name_src =~ s/\//\\/g;
+        $dll_name_src =~ s/\A\.\\//g;        
+    }    
+}
+
+sub CheckFindPath()
+{
+    foreach $dep (@deps)
+    {
+        return TRUE if ($File::Find::dir =~ m/$dep/);
+    }
+    return 0;
 }
 
 sub CheckoutDep
