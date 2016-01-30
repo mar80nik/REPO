@@ -2,6 +2,7 @@
 
 use Cwd;
 use File::Find;
+use Term::ANSIColor qw(:constants);
 
 %Repos = (  'my_lib' => { 'dep' => []},
             'my_gsl' => { 'dep' => ['my_lib']},
@@ -23,6 +24,8 @@ use File::Find;
                            
 $Repos{'Tracker'} = $Repos{'Refractometer'};
 $Repos{'DJVU_SEP'} = $Repos{'testWMF'};
+
+$GlobalTarget = 'AAA';
             
 sub my_chdir
 {
@@ -36,24 +39,31 @@ sub MakeClone
 {
     my ($repo_name) = shift(@_);
     my ($checkout) = shift(@_);
-    print("=== Cloning: '$repo_name'\n");
+    print GREEN BOLD "=== $GlobalTarget === Cloning: '$repo_name'",RESET, "\n";
     if(-d $repo_name)
     {
-        print("===   Error: repo $repo_name already exists\n");        
+        print(YELLOW,"=== $GlobalTarget === Warning: repo $repo_name already exists trying to fetch it\n",RESET);        
+        print CYAN;
+        `git fetch --all`;
+        `git fetch --tags`;
+        print RESET;
     }
     else
     {
+        print CYAN;
         `git clone https:\/\/github.com\/mar80nik\/$repo_name.git`;
         my $cur_dir = my_chdir($repo_name);
         `git remote set-url origin git\@github.com:mar80nik\/$repo_name.git`;
+        print RESET;
         chdir($cur_dir);
     }
 
     if ($checkout eq 'checkout')
     {
-        print("=== Checking out LSV: ");
+        print("=== $GlobalTarget === Checking out LSV: ", CYAN);
         my ($cur_dir) = my_chdir($repo_name);
         `git checkout LSV`;
+        print RESET;
         chdir($cur_dir);    
     }
 }
@@ -65,7 +75,7 @@ sub CloneDep
     my (@dep) = @$arr;
     if ($#dep >= 0)
     {
-        print("=== Cloning dependencies\n");
+        print("=== $GlobalTarget === Cloning dependencies\n");
         MakeClone($_) foreach(@dep);
     }
 }
@@ -79,7 +89,7 @@ sub LinkDLLs
     my @RepoDlls = @{$Repos{$repo_name}->{'dlls'}};
     @deps = @{$Repos{$repo_name}->{'dep'}};
     
-    print("=== Creating symbolic links for $repo_name DLLs\n") if ($#RepoDlls >= 0);
+    print("=== $GlobalTarget === Creating symbolic links for $repo_name DLLs\n") if ($#RepoDlls >= 0);
     
     foreach $dll_name (@RepoDlls)
     {
@@ -130,14 +140,26 @@ sub CheckoutDep
     my ($cur_dir) = my_chdir($repo_name);
     if (-f 'Makefile.pl')
     {
-        print("=== Checkouting dependencies\n");
+        print "=== $GlobalTarget === Checkouting dependencies\n";
+        print CYAN;
         `Makefile.pl`;
+        print RESET;
     }
     else
     {
         print("No makefile\n");    
     }
     chdir($cur_dir);
+}
+
+sub main
+{
+    my ($target) = shift(@_); 
+    $GlobalTarget = $target;
+    MakeClone($target, checkout);
+    CloneDep($target);
+    CheckoutDep($target);
+    LinkDLLs($target); 
 }
 
 ### START ###
@@ -150,17 +172,24 @@ die("target should be defined\n") if $target eq '';
 
 if (exists($Repos{$target}))
 {    
-    MakeClone($target, checkout);
-    CloneDep($target);
-    CheckoutDep($target);
-    LinkDLLs($target);        
+    main($target);
 }
 else
 {
-    print("===   Error: Target $target is not recgonized\n");
-    print("===   It should be one of:\n");
-    foreach(keys(%Repos))
+    if ($target eq 'all')
     {
-        print("$_\n");
-    }    
+        foreach $target (keys(%Repos))
+        {
+            main($target);            
+        }            
+    }
+    else
+    {
+        print("===   Error: Target $target is not recgonized\n");
+        print("===   It should be one of:\n");
+        foreach(keys(%Repos))
+        {
+            print("$_\n");
+        }    
+    }
 }
